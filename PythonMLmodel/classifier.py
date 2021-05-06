@@ -4,16 +4,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import os
-from PIL import Image
 import pathlib
 import csv
 
 # Preprocessing
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
-
-#Keras
-import keras
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import classification_report, confusion_matrix
 
 #Extracting a spectogram from every file
 """
@@ -66,3 +64,25 @@ for g in genres:
             writer = csv.writer(file)
             writer.writerow(to_append.split())
 """
+
+data = pd.read_csv("data.csv")
+y = data.label
+x = data.drop(["label", "filename"], axis=1)
+
+x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.2)
+print(x_train.shape)
+print(x_test.shape)
+
+scaler = StandardScaler()
+scaler.fit(x_train)
+
+X_train = scaler.transform(x_train)
+X_test = scaler.transform(x_test)
+
+classifier = KNeighborsClassifier(n_neighbors=5)
+classifier.fit(X_train, y_train)
+
+y_pred = classifier.predict(X_test)
+
+print(confusion_matrix(y_test, y_pred))
+print(classification_report(y_test, y_pred))
