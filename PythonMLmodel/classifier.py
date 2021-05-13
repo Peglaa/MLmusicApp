@@ -7,11 +7,16 @@ import os
 import pathlib
 import csv
 
+import tensorflow.keras as keras
+from sklearn.preprocessing import LabelEncoder
+
 # Preprocessing
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import classification_report, confusion_matrix
+from tensorflow.python.keras.backend import sparse_categorical_crossentropy
+from tensorflow.python.keras.layers.core import Dropout
 
 #Extracting a spectogram from every file
 """
@@ -69,7 +74,15 @@ data = pd.read_csv("data.csv")
 y = data.label
 x = data.drop(["label", "filename"], axis=1)
 
-x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.2)
+targetNames = np.unique(y)
+le          = LabelEncoder()
+target      = le.fit_transform(y)
+
+target= np.array(target)
+print(target)
+x=np.array(x)
+
+x_train,x_test,y_train,y_test=train_test_split(x,target,test_size=0.2)
 print(x_train.shape)
 print(x_test.shape)
 
@@ -78,11 +91,56 @@ scaler.fit(x_train)
 
 X_train = scaler.transform(x_train)
 X_test = scaler.transform(x_test)
-
+'''
 classifier = KNeighborsClassifier(n_neighbors=5)
 classifier.fit(X_train, y_train)
 
 y_pred = classifier.predict(X_test)
 
 print(confusion_matrix(y_test, y_pred))
-print(classification_report(y_test, y_pred))
+print(classification_report(y_test, y_pred))'''
+
+model = keras.Sequential([
+    keras.layers.Flatten(input_shape=(X_train.shape[1],)),
+
+    keras.layers.Dense(512, activation="relu", kernel_regularizer=keras.regularizers.l2(0.001)),
+    keras.layers.Dropout(0.4),
+
+    keras.layers.Dense(256, activation="relu", kernel_regularizer=keras.regularizers.l2(0.001)),
+    keras.layers.Dropout(0.4),
+
+    keras.layers.Dense(64, activation="relu", kernel_regularizer=keras.regularizers.l2(0.001)),
+    keras.layers.Dropout(0.4),
+
+    keras.layers.Dense(10, activation="softmax")
+])
+
+optimizer = keras.optimizers.Adam(learning_rate = 0.001)
+model.compile(  optimizer=optimizer,
+                loss="sparse_categorical_crossentropy",
+                metrics=["sparse_categorical_accuracy"])
+
+model.summary()
+
+history = model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=200, batch_size=32)
+
+print("Evaluate on test data")
+results = model.evaluate(X_test, y_test, batch_size=128)
+print("test loss, test acc:", results)
+
+fig, axs = plt.subplots(2)
+
+axs[0].plot(history.history["sparse_categorical_accuracy"], label="train_accuracy")
+axs[0].plot(history.history["val_sparse_categorical_accuracy"], label="test_accuracy")
+axs[0].set_ylabel("Accuracy")
+axs[0].legend(loc="lower right")
+axs[0].set_title("Accuracy eval")
+
+axs[1].plot(history.history["loss"], label="train_error")
+axs[1].plot(history.history["val_loss"], label="test_error")
+axs[1].set_ylabel("Error")
+axs[1].set_xlabel("Epoch")
+axs[1].legend(loc="upper right")
+axs[1].set_title("Error eval")
+
+plt.show()
