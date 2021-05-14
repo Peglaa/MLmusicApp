@@ -7,6 +7,7 @@ import os
 import pathlib
 import csv
 
+import tensorflow as tf
 import tensorflow.keras as keras
 from sklearn.preprocessing import LabelEncoder
 
@@ -131,6 +132,13 @@ def create_overfitting_graph():
 
     plt.show()
 
+def create_tensorflowlite_file(model):
+    TF_LITE_MODEL_NAME = "tf_lite_model.tflite"
+    converter = tf.lite.TFLiteConverter.from_keras_model(model)
+    tflite_model = converter.convert()
+
+    open(TF_LITE_MODEL_NAME, "wb").write(tflite_model)
+
 if __name__ == "__main__":
     X, Y = get_feature_data()
     X_train, X_test, Y_train, Y_test = split_data(X,Y)
@@ -160,3 +168,5 @@ if __name__ == "__main__":
     print("test loss, test acc:", results)
 
     create_overfitting_graph()
+
+    #create_tensorflowlite_file(model)
