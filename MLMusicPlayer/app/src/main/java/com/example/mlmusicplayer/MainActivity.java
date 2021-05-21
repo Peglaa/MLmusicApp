@@ -1,9 +1,11 @@
 package com.example.mlmusicplayer;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager2.widget.ViewPager2;
 
 import android.Manifest;
 import android.net.Uri;
@@ -12,6 +14,7 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 
+import com.google.android.material.tabs.TabLayout;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionDeniedResponse;
@@ -24,72 +27,52 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
-    private RecyclerView songRecycler;
-    private SongRecyclerAdapter songAdapter;
-    private String[] songs;
-
+    TabLayout tabLayout;
+    ViewPager2 viewPager2;
+    FragmentAdapter fragmentAdapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        songRecycler = findViewById(R.id.songRecycler);
-        songRecycler.setLayoutManager(new LinearLayoutManager(this));
+        tabLayout = findViewById(R.id.tab_layout);
+        viewPager2 = findViewById(R.id.view_pager2);
 
-        runtimePermission();
-    }
+        FragmentManager fm = getSupportFragmentManager();
+        fragmentAdapter = new FragmentAdapter(fm, getLifecycle());
+        viewPager2.setAdapter(fragmentAdapter);
 
-    public void runtimePermission() {
-        Dexter.withContext(this).withPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
-                .withListener(new PermissionListener() {
-                    @Override
-                    public void onPermissionGranted(PermissionGrantedResponse permissionGrantedResponse) {
-                        displaySongs();
-                    }
+        tabLayout.addTab(tabLayout.newTab().setText("Songs"));
+        tabLayout.addTab(tabLayout.newTab().setText("Predictor"));
 
-                    @Override
-                    public void onPermissionDenied(PermissionDeniedResponse permissionDeniedResponse) {
-
-                    }
-
-                    @Override
-                    public void onPermissionRationaleShouldBeShown(PermissionRequest permissionRequest, PermissionToken permissionToken) {
-                        permissionToken.continuePermissionRequest();
-                    }
-                }).check();
-
-    }
-
-    public ArrayList<File> findSongs(File file) {
-        ArrayList<File> arrayList = new ArrayList<>();
-        File[] files = file.listFiles();
-
-        for (File singleFile : files) {
-            if (singleFile.isDirectory() && !singleFile.isHidden()) {
-                arrayList.addAll(findSongs(singleFile));
-            } else {
-                if (singleFile.getName().endsWith(".mp3") || singleFile.getName().endsWith(".wav")) {
-                    arrayList.add(singleFile);
-                }
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                viewPager2.setCurrentItem(tab.getPosition());
             }
-        }
 
-        return arrayList;
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+
+            }
+        });
+
+        viewPager2.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                tabLayout.selectTab(tabLayout.getTabAt(position));
+            }
+        });
     }
 
-    private void displaySongs() {
-        final ArrayList<File> mySongs = findSongs(Environment.getExternalStorageDirectory());
-        Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
 
-        songs = new String[mySongs.size()];
 
-        for (int i = 0; i < mySongs.size(); i++) {
-            songs[i] = mySongs.get(i).getName().replace(".mp3", "").replace(".wav", "");
-            Log.v("SONGS", songs[i]);
-        }
 
-        songAdapter = new SongRecyclerAdapter(this, songs);
-        songRecycler.setAdapter(songAdapter);
-        songRecycler.addItemDecoration(new DividerItemDecoration(songRecycler.getContext(), DividerItemDecoration.VERTICAL));
-    }
+
+
 }
