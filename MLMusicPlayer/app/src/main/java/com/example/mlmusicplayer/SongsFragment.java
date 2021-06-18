@@ -1,6 +1,7 @@
 package com.example.mlmusicplayer;
 
 import android.Manifest;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -13,10 +14,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.util.AtomicFile;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.PermissionToken;
@@ -27,16 +30,14 @@ import com.karumi.dexter.listener.single.PermissionListener;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
-public class SongsFragment extends Fragment {
+public class SongsFragment extends Fragment implements SongClickListener{
 
     private RecyclerView songRecycler;
     private SongRecyclerAdapter songAdapter;
-    private String[] songs;
-
-    public SongsFragment() {
-        // Required empty public constructor
-    }
+    private List<String> songs = new ArrayList<>();
+    private ArrayList<File> mySongs = new ArrayList<>();
 
     public static SongsFragment newInstance() {
         return new SongsFragment();
@@ -103,17 +104,28 @@ public class SongsFragment extends Fragment {
     }
 
     private void displaySongs() {
-        final ArrayList<File> mySongs = findSongs(Environment.getExternalStorageDirectory());
-
-        songs = new String[mySongs.size()];
+        mySongs = findSongs(Environment.getExternalStorageDirectory());
 
         for (int i = 0; i < mySongs.size(); i++) {
-            songs[i] = mySongs.get(i).getName().replace(".mp3", "").replace(".wav", "");
-            Log.v("SONGS", songs[i]);
+            songs.add(mySongs.get(i).getName().replace(".mp3", "").replace(".wav", ""));
+            Log.v("SONGS", songs.get(i));
         }
 
-        songAdapter = new SongRecyclerAdapter(requireContext(), songs);
+        songAdapter = new SongRecyclerAdapter(requireContext(), songs, this);
         songRecycler.setAdapter(songAdapter);
+
+
         songRecycler.addItemDecoration(new DividerItemDecoration(songRecycler.getContext(), DividerItemDecoration.VERTICAL));
+
+
+    }
+
+    @Override
+    public void onItemClick(int position) {
+        String songName = (String) songs.get(position);
+        startActivity(new Intent(requireContext(), PlayerActivity.class)
+                .putExtra("songs", mySongs)
+                .putExtra("name", songName)
+                .putExtra("pos", position));
     }
 }
