@@ -1,5 +1,6 @@
 package com.example.mlmusicplayer;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -27,6 +28,7 @@ public class PlayerActivity extends AppCompatActivity {
     int position;
     ArrayList<File> mySongs;
 
+    @SuppressLint("ResourceAsColor")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
