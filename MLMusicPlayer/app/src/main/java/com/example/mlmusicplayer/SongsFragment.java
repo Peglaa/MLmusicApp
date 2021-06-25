@@ -13,6 +13,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.provider.MediaStore;
 import android.util.AtomicFile;
 import android.util.Log;
@@ -21,6 +24,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -61,6 +65,29 @@ public class SongsFragment extends Fragment implements SongClickListener{
     private static final String TAG = "Predictor";
     private PyObject modelObject;
     private boolean isModelSetup = false;
+    private ProgressBar progressModel, progressPrediction;
+    private Handler handler = new Handler(){
+
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            super.handleMessage(msg);
+
+            Bundle objBundle = msg.getData();
+
+            if(objBundle.containsKey("MODEL")){
+                btnModel.setEnabled(true);
+                btnPredict.setEnabled(true);
+                progressModel.setVisibility(View.INVISIBLE);
+            }
+            if(objBundle.containsKey("PREDICT")){
+                btnModel.setEnabled(true);
+                btnPredict.setEnabled(true);
+                progressPrediction.setVisibility(View.INVISIBLE);
+
+            }
+
+        }
+    };
 
     public static SongsFragment newInstance() {
         return new SongsFragment();
@@ -97,6 +124,10 @@ public class SongsFragment extends Fragment implements SongClickListener{
                 setupModel();
             }
         });
+        progressModel = view.findViewById(R.id.modelProgress);
+        progressModel.setVisibility(View.INVISIBLE);
+        progressPrediction = view.findViewById(R.id.predictProgress);
+        progressPrediction.setVisibility(View.INVISIBLE);
         songRecycler = view.findViewById(R.id.songs_recycler);
         songRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         runtimePermission();
@@ -172,16 +203,40 @@ public class SongsFragment extends Fragment implements SongClickListener{
             Toast toast = Toast.makeText(requireContext(), "Model is already ready!", Toast.LENGTH_SHORT);
             toast.show();
         } else {
-            if (!Python.isStarted()) {
-                Python.start(new AndroidPlatform(requireContext()));
-            }
+            btnModel.setEnabled(false);
+            btnPredict.setEnabled(false);
+            progressModel.setVisibility(View.VISIBLE);
+            Runnable objRunnable = new Runnable() {
 
-            Python py = Python.getInstance();
-            PyObject pyObject = py.getModule("classifier");
-            Log.i(TAG, "Creating ML model... ");
+                Message message = handler.obtainMessage();
+                Bundle objBundle = new Bundle();
 
-            modelObject = pyObject.callAttr("setupModel", "/storage/emulated/0/Music/data.csv");
-            isModelSetup = true;
+                @Override
+                public void run() {
+                    try {
+
+                        if (! Python.isStarted()) {
+                            Python.start(new AndroidPlatform(requireContext()));
+                        }
+                        Python py = Python.getInstance();
+                        PyObject pyObject = py.getModule("classifier");
+                        Log.i(TAG, "Creating ML model... ");
+
+                        modelObject = pyObject.callAttr("setupModel", "/storage/emulated/0/Music/data.csv");
+                        isModelSetup = true;
+
+                    }
+                    catch (Exception e){
+                        e.printStackTrace();
+                    }
+
+                    objBundle.putString("MODEL", "model");
+                    message.setData(objBundle);
+                    handler.sendMessage(message);
+                }
+            };
+            Thread objBackgroundThread = new Thread(objRunnable);
+            objBackgroundThread.start();
         }
     }
 
@@ -192,17 +247,53 @@ public class SongsFragment extends Fragment implements SongClickListener{
             toast.show();
         }
         else {
-            Python py = Python.getInstance();
-            PyObject pyObject = py.getModule("classifier");
-            Log.i(TAG, "Extracting features... ");
-            int index = 0;
-            for (File song : mySongs) {
-                PyObject pyobj = pyObject.callAttr("full_prediction", song.toString(), modelObject);
-                Log.i(TAG, "PREDICTION: " + pyobj);
-                predictions.add(formatPrediction(pyobj.toString()));
-                songAdapter.notifyItemChanged(index);
-                index++;
-            }
+            btnModel.setEnabled(false);
+            btnPredict.setEnabled(false);
+            progressPrediction.setVisibility(View.VISIBLE);
+            Runnable objRunnable = new Runnable() {
+
+                Message message = handler.obtainMessage();
+                Bundle objBundle = new Bundle();
+
+                @Override
+                public void run() {
+                    try {
+                        if (! Python.isStarted()) {
+                            Python.start(new AndroidPlatform(requireContext()));
+                        }
+                        Python py = Python.getInstance();
+                        PyObject pyObject = py.getModule("classifier");
+                        Log.i(TAG, "Extracting features... ");
+                        int index = 0;
+                        for (File song : mySongs) {
+                            PyObject pyobj = pyObject.callAttr("full_prediction", song.toString(), modelObject);
+                            Log.i(TAG, "PREDICTION: " + pyobj);
+                            predictions.add(formatPrediction(pyobj.toString()));
+                            // Get a handler that can be used to post to the main thread
+                            Handler mainHandler = new Handler(Looper.getMainLooper());
+
+                            int finalIndex = index;
+                            Runnable myRunnable = new Runnable() {
+                                @Override
+                                public void run() {
+                                    songAdapter.notifyItemChanged(finalIndex);
+                                } // This is your code
+                            };
+                            mainHandler.post(myRunnable);
+                            index++;
+                        }
+                    }
+                    catch (Exception e){
+                        e.printStackTrace();
+                    }
+
+                    objBundle.putString("PREDICT", "predict");
+                    message.setData(objBundle);
+                    handler.sendMessage(message);
+                }
+            };
+            Thread objBackgroundThread = new Thread(objRunnable);
+            objBackgroundThread.start();
         }
 
 
@@ -237,4 +328,6 @@ public class SongsFragment extends Fragment implements SongClickListener{
                 return "Rock";
         }
     }
+
+
 }

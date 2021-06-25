@@ -12,26 +12,53 @@
 
     </androidx.recyclerview.widget.RecyclerView>
 
-    <Button
-        android:id="@+id/btnPredict"
-        android:layout_width="100dp"
-        android:layout_height="wrap_content"
+
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="220dp"
         android:layout_below="@id/songs_recycler"
-        android:layout_marginTop="100dp"
-        android:layout_centerHorizontal="true"
-        android:text="PREDICT">
+        android:layout_marginTop="30dp">
 
-    </Button>
+        <Button
+            android:id="@+id/btnPredict"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="100dp"
+            android:text="PREDICT"
+            android:layout_marginStart="150dp"
+            >
 
-    <Button
-        android:id="@+id/btnModel"
-        android:layout_width="100dp"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/songs_recycler"
-        android:layout_marginTop="30dp"
-        android:layout_centerHorizontal="true"
-        android:text="SETUP MODEL">
+        </Button>
 
-    </Button>
+        <Button
+            android:id="@+id/btnModel"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="30dp"
+            android:text="SETUP MODEL"
+            android:layout_marginStart="150dp">
+
+        </Button>
+        <ProgressBar
+            android:id="@+id/modelProgress"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="40dp"
+            android:layout_marginStart="250dp"
+            android:indeterminate="true">
+
+        </ProgressBar>
+
+        <ProgressBar
+            android:id="@+id/predictProgress"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="105dp"
+            android:layout_marginStart="250dp"
+            android:indeterminate="true">
+
+        </ProgressBar>
+    </FrameLayout>
 
 </RelativeLayout>
