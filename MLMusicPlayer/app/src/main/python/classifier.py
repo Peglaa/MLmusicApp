@@ -76,8 +76,9 @@ def generate_features():
 
 def get_feature_data(datacsv):
     data = pd.read_csv(datacsv)
-    y = data.label
-    x = data.drop(["label", "filename"], axis=1)
+    shuffled_data = data.sample(frac=1)
+    y = shuffled_data.label
+    x = shuffled_data.drop(["label", "filename"], axis=1)
 
     le = LabelEncoder()
     target = le.fit_transform(y)
@@ -87,7 +88,7 @@ def get_feature_data(datacsv):
     return x,target
 
 def split_data(x, y):
-    x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.2)
+    x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.3)
     #print(x_train.shape)
     #print(x_test.shape)
 
@@ -97,7 +98,7 @@ def split_data(x, y):
     X_train = scaler.transform(x_train)
     X_test = scaler.transform(x_test)
 
-    return X_train, X_test, y_train, y_test
+    return x_train, x_test, y_train, y_test
 
 def create_model(X_train):
     model = keras.Sequential([
@@ -143,7 +144,7 @@ def create_tensorflowlite_file(model):
     open(TF_LITE_MODEL_NAME, "wb").write(tflite_model)
 
 def generate_features(song):
-    y, sr = librosa.load(song, mono=True, duration=60)
+    y, sr = librosa.load(song, mono=True, duration=30)
     chroma_stft = librosa.feature.chroma_stft(y=y, sr=sr)
     spec_cent = librosa.feature.spectral_centroid(y=y, sr=sr)
     spec_bw = librosa.feature.spectral_bandwidth(y=y, sr=sr)
@@ -166,7 +167,7 @@ def generate_features(song):
     for i in range(len(features)):
         predict_features[0][i] = features[i]
 
-    #print(predict_features)
+    print(predict_features)
     return predict_features
 
 
@@ -174,15 +175,16 @@ def setupModel(data):
     X, Y = get_feature_data(data)
     X_train, X_test, Y_train, Y_test = split_data(X,Y)
     
-    '''
+    
     classifier = KNeighborsClassifier(n_neighbors=5)
-    classifier.fit(X_train, y_train)
+    classifier.fit(X_train, Y_train)
 
     y_pred = classifier.predict(X_test)
 
-    print(confusion_matrix(y_test, y_pred))
-    print(classification_report(y_test, y_pred))'''
+    print(confusion_matrix(Y_test, y_pred))
+    print(classification_report(Y_test, y_pred))
 
+    '''
     model = create_model(X_train)
 
     optimizer = keras.optimizers.Adam(learning_rate = 0.001)
@@ -192,12 +194,12 @@ def setupModel(data):
 
     #model.summary()
 
-    history = model.fit(X_train, Y_train, validation_data=(X_test, Y_test), epochs=50, batch_size=32)
+    history = model.fit(X_train, Y_train, validation_data=(X_test, Y_test), epochs=50, batch_size=32)'''
 
-    return model
+    return classifier
 
 def full_prediction(song, model):
-    
+    '''
     #print("Evaluate on test data")
     #results = model.evaluate(X_test, Y_test, batch_size=128)
     #print("test loss, test acc:", results)
@@ -211,8 +213,12 @@ def full_prediction(song, model):
     #print(prediction)
 
     
-    #create_tensorflowlite_file(model)
+    #create_tensorflowlite_file(model)'''
+
+    topredict = generate_features(song)
+    prediction = model.predict(topredict)
+    print(prediction)
     return prediction
 
 if __name__ == "__main__":
-    full_prediction("gotama.wav", "data.csv")
+    full_prediction("C:\\Users\\stipa\\Desktop\\CLAUDE DEBUSSY CLAIR DE LUNE(classical).WAV", setupModel("data.csv"))

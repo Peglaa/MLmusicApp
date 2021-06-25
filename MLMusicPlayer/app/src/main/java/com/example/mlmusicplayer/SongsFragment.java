@@ -162,7 +162,7 @@ public class SongsFragment extends Fragment implements SongClickListener{
             if (singleFile.isDirectory() && !singleFile.isHidden()) {
                 arrayList.addAll(findSongs(singleFile));
             } else {
-                if (singleFile.getName().endsWith(".wav")) {
+                if (singleFile.getName().endsWith(".wav") || singleFile.getName().endsWith(".WAV") ) {
                     arrayList.add(singleFile);
                 }
             }
