@@ -1,5 +1,6 @@
 plugins {
     id 'com.android.application'
+    id 'com.chaquo.python'
 }
 
 android {
@@ -15,6 +16,30 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
+        ndk {
+            abiFilters "armeabi-v7a", "arm64-v8a"
+        }
+
+        python {
+            buildPython "C:/Users/stipa/AppData/Local/Programs/Python/Python38/python.exe"
+
+            pip{
+                install "numpy"
+                install "librosa"
+                install "pandas"
+                install "matplotlib"
+                install "scikit-learn"
+                install "tensorflow"
+
+            }
+        }
+
+    }
+
+    sourceSets {
+        main {
+            python.srcDir "src/main/python"
+        }
     }
 
     buildTypes {
@@ -27,6 +52,9 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    buildFeatures {
+        mlModelBinding true
+    }
 }
 
 dependencies {
@@ -36,6 +64,8 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
     implementation 'com.karumi:dexter:6.2.2'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'org.tensorflow:tensorflow-lite-support:0.1.0-rc1'
+    implementation 'org.tensorflow:tensorflow-lite-metadata:0.1.0-rc1'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'

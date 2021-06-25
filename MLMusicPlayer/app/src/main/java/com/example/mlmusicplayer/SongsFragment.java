@@ -20,7 +20,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import com.chaquo.python.PyObject;
+import com.chaquo.python.Python;
+import com.chaquo.python.android.AndroidPlatform;
+import com.example.mlmusicplayer.ml.TfLiteModel;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionDeniedResponse;
@@ -28,16 +35,32 @@ import com.karumi.dexter.listener.PermissionGrantedResponse;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.single.PermissionListener;
 
+import org.tensorflow.lite.DataType;
+import org.tensorflow.lite.Tensor;
+import org.tensorflow.lite.schema.TensorType;
+import org.tensorflow.lite.support.image.TensorImage;
+import org.tensorflow.lite.support.metadata.schema.TensorMetadata;
+import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
+import org.tensorflow.lite.support.tensorbuffer.TensorBufferFloat;
+
 import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class SongsFragment extends Fragment implements SongClickListener{
 
     private RecyclerView songRecycler;
+    private Button btnPredict, btnModel;
     private SongRecyclerAdapter songAdapter;
     private List<String> songs = new ArrayList<>();
     private ArrayList<File> mySongs = new ArrayList<>();
+    private ArrayList<String> predictions = new ArrayList<>();
+    private static final String TAG = "Predictor";
+    private PyObject modelObject;
+    private boolean isModelSetup = false;
 
     public static SongsFragment newInstance() {
         return new SongsFragment();
@@ -60,6 +83,20 @@ public class SongsFragment extends Fragment implements SongClickListener{
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        btnPredict = view.findViewById(R.id.btnPredict);
+        btnPredict.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                predictSongsGenre();
+            }
+        });
+        btnModel = view.findViewById(R.id.btnModel);
+        btnModel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setupModel();
+            }
+        });
         songRecycler = view.findViewById(R.id.songs_recycler);
         songRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         runtimePermission();
@@ -94,7 +131,7 @@ public class SongsFragment extends Fragment implements SongClickListener{
             if (singleFile.isDirectory() && !singleFile.isHidden()) {
                 arrayList.addAll(findSongs(singleFile));
             } else {
-                if (singleFile.getName().endsWith(".mp3") || singleFile.getName().endsWith(".wav")) {
+                if (singleFile.getName().endsWith(".wav")) {
                     arrayList.add(singleFile);
                 }
             }
@@ -105,13 +142,14 @@ public class SongsFragment extends Fragment implements SongClickListener{
 
     private void displaySongs() {
         mySongs = findSongs(Environment.getExternalStorageDirectory());
+        Log.i(TAG, "SONGS: " + mySongs);
 
         for (int i = 0; i < mySongs.size(); i++) {
             songs.add(mySongs.get(i).getName().replace(".mp3", "").replace(".wav", ""));
             Log.v("SONGS", songs.get(i));
         }
 
-        songAdapter = new SongRecyclerAdapter(requireContext(), songs, this);
+        songAdapter = new SongRecyclerAdapter(requireContext(), songs, predictions, this);
         songRecycler.setAdapter(songAdapter);
 
 
@@ -127,5 +165,76 @@ public class SongsFragment extends Fragment implements SongClickListener{
                 .putExtra("songs", mySongs)
                 .putExtra("name", songName)
                 .putExtra("pos", position));
+    }
+
+    private void setupModel() {
+        if (isModelSetup) {
+            Toast toast = Toast.makeText(requireContext(), "Model is already ready!", Toast.LENGTH_SHORT);
+            toast.show();
+        } else {
+            if (!Python.isStarted()) {
+                Python.start(new AndroidPlatform(requireContext()));
+            }
+
+            Python py = Python.getInstance();
+            PyObject pyObject = py.getModule("classifier");
+            Log.i(TAG, "Creating ML model... ");
+
+            modelObject = pyObject.callAttr("setupModel", "/storage/emulated/0/Music/data.csv");
+            isModelSetup = true;
+        }
+    }
+
+    private void predictSongsGenre() {
+
+        if(!isModelSetup){
+            Toast toast = Toast.makeText(requireContext(), "You need to setup the model first!", Toast.LENGTH_SHORT);
+            toast.show();
+        }
+        else {
+            Python py = Python.getInstance();
+            PyObject pyObject = py.getModule("classifier");
+            Log.i(TAG, "Extracting features... ");
+            int index = 0;
+            for (File song : mySongs) {
+                PyObject pyobj = pyObject.callAttr("full_prediction", song.toString(), modelObject);
+                Log.i(TAG, "PREDICTION: " + pyobj);
+                predictions.add(formatPrediction(pyobj.toString()));
+                songAdapter.notifyItemChanged(index);
+                index++;
+            }
+        }
+
+
+    }
+
+    private String formatPrediction(String prediction){
+        String pred1 = prediction.replace("[", "");
+        String pred2 = pred1.replace("]", "");
+        int num = Integer.parseInt(pred2);
+        switch(num){
+            default:
+                return "Genre";
+            case 0:
+                return "Blues";
+            case 1:
+                return "Classical";
+            case 2:
+                return "Country";
+            case 3:
+                return "Disco";
+            case 4:
+                return "HipHop";
+            case 5:
+                return "Jazz";
+            case 6:
+                return "Metal";
+            case 7:
+                return "Pop";
+            case 8:
+                return "Reggae";
+            case 9:
+                return "Rock";
+        }
     }
 }

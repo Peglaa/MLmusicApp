@@ -1,5 +1,5 @@
-'''
 import librosa
+from librosa import feature
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -21,7 +21,7 @@ from tensorflow.python.keras.backend import sparse_categorical_crossentropy
 from tensorflow.python.keras.layers.core import Dropout
 
 #Extracting a spectogram from every file
-
+'''
 def create_spectograms():
     cmap = plt.get_cmap('inferno')
 
@@ -64,7 +64,7 @@ def generate_features():
             zcr = librosa.feature.zero_crossing_rate(y)
             mfcc = librosa.feature.mfcc(y=y, sr=sr)
             rmse = librosa.feature.rms(y=y)
-            to_append = f'{filename} {np.mean(chroma_stft)} s{np.mean(rme)} {np.mean(spec_cent)} {np.mean(spec_bw)} {np.mean(rolloff)} {np.mean(zcr)}'    
+            to_append = f'{filename} {np.mean(chroma_stft)} {np.mean(rmse)} {np.mean(spec_cent)} {np.mean(spec_bw)} {np.mean(rolloff)} {np.mean(zcr)}'    
             for e in mfcc:
                 to_append += f' {np.mean(e)}'
             to_append += f' {g}'
@@ -73,21 +73,23 @@ def generate_features():
                 writer = csv.writer(file)
                 writer.writerow(to_append.split())
 '''
-'''
-def get_feature_data():
-    data = pd.read_csv("data.csv")
+
+def get_feature_data(datacsv):
+    data = pd.read_csv(datacsv)
     y = data.label
     x = data.drop(["label", "filename"], axis=1)
 
     le = LabelEncoder()
     target = le.fit_transform(y)
 
+    #print(y)
+    #print(target)
     return x,target
 
 def split_data(x, y):
     x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.2)
-    print(x_train.shape)
-    print(x_test.shape)
+    #print(x_train.shape)
+    #print(x_test.shape)
 
     scaler = StandardScaler()
     scaler.fit(x_train)
@@ -97,7 +99,7 @@ def split_data(x, y):
 
     return X_train, X_test, y_train, y_test
 
-def create_model():
+def create_model(X_train):
     model = keras.Sequential([
         keras.layers.Flatten(input_shape=(X_train.shape[1],)),
 
@@ -115,7 +117,7 @@ def create_model():
 
     return model
 
-def create_overfitting_graph():
+def create_overfitting_graph(history):
     fig, axs = plt.subplots(2)
 
     axs[0].plot(history.history["sparse_categorical_accuracy"], label="train_accuracy")
@@ -139,40 +141,78 @@ def create_tensorflowlite_file(model):
     tflite_model = converter.convert()
 
     open(TF_LITE_MODEL_NAME, "wb").write(tflite_model)
-'''
-def test_function(number):
-    return "Hello World!" + str(number)
 
-if __name__ == "__main__":
-    '''
-    X, Y = get_feature_data()
+def generate_features(song):
+    y, sr = librosa.load(song, mono=True, duration=60)
+    chroma_stft = librosa.feature.chroma_stft(y=y, sr=sr)
+    spec_cent = librosa.feature.spectral_centroid(y=y, sr=sr)
+    spec_bw = librosa.feature.spectral_bandwidth(y=y, sr=sr)
+    rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr)
+    zcr = librosa.feature.zero_crossing_rate(y)
+    mfcc = librosa.feature.mfcc(y=y, sr=sr)
+    rmse = librosa.feature.rms(y=y)
+
+    predict_features = np.zeros((1, 26))
+    features = []
+    features.append(np.mean(chroma_stft)) 
+    features.append(np.mean(rmse)) 
+    features.append(np.mean(spec_cent))
+    features.append(np.mean(spec_bw))
+    features.append(np.mean(rolloff))
+    features.append(np.mean(zcr))
+    for e in mfcc:
+        features.append(np.mean(e))
+
+    for i in range(len(features)):
+        predict_features[0][i] = features[i]
+
+    #print(predict_features)
+    return predict_features
+
+
+def setupModel(data):
+    X, Y = get_feature_data(data)
     X_train, X_test, Y_train, Y_test = split_data(X,Y)
     
-    
+    '''
     classifier = KNeighborsClassifier(n_neighbors=5)
     classifier.fit(X_train, y_train)
 
     y_pred = classifier.predict(X_test)
 
     print(confusion_matrix(y_test, y_pred))
-    print(classification_report(y_test, y_pred))
+    print(classification_report(y_test, y_pred))'''
 
-    model = create_model()
+    model = create_model(X_train)
 
     optimizer = keras.optimizers.Adam(learning_rate = 0.001)
     model.compile(  optimizer=optimizer,
                     loss="sparse_categorical_crossentropy",
                     metrics=["sparse_categorical_accuracy"])
 
-    model.summary()
+    #model.summary()
 
     history = model.fit(X_train, Y_train, validation_data=(X_test, Y_test), epochs=50, batch_size=32)
 
-    print("Evaluate on test data")
-    results = model.evaluate(X_test, Y_test, batch_size=128)
-    print("test loss, test acc:", results)
+    return model
 
-    create_overfitting_graph()
+def full_prediction(song, model):
+    
+    #print("Evaluate on test data")
+    #results = model.evaluate(X_test, Y_test, batch_size=128)
+    #print("test loss, test acc:", results)
 
+    #print(X_test.shape)
+
+    #create_overfitting_graph(history)
+    topredict = generate_features(song)
+    #print(topredict.shape)
+    prediction = np.argmax(model.predict(topredict), axis=-1)
+    #print(prediction)
+
+    
     #create_tensorflowlite_file(model)
-    '''
+    return prediction
+
+if __name__ == "__main__":
+    full_prediction("gotama.wav", "data.csv")

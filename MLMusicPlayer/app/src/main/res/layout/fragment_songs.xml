@@ -8,8 +8,30 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/songs_recycler"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" >
+        android:layout_height="400dp" >
 
     </androidx.recyclerview.widget.RecyclerView>
+
+    <Button
+        android:id="@+id/btnPredict"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/songs_recycler"
+        android:layout_marginTop="100dp"
+        android:layout_centerHorizontal="true"
+        android:text="PREDICT">
+
+    </Button>
+
+    <Button
+        android:id="@+id/btnModel"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/songs_recycler"
+        android:layout_marginTop="30dp"
+        android:layout_centerHorizontal="true"
+        android:text="SETUP MODEL">
+
+    </Button>
 
 </RelativeLayout>

@@ -13,19 +13,21 @@ import java.util.List;
 
 public class SongRecyclerAdapter extends RecyclerView.Adapter<SongRecyclerAdapter.SongViewHolder> {
 
-    private List<String> mSongs;
+    private List<String> mSongs, predictions;
     private Context mContext;
     private SongClickListener listener;
 
     public static class SongViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
 
         private final TextView songName;
+        private TextView txtPrediction;
         private SongClickListener listener;
 
         public SongViewHolder(@NonNull View itemVew, SongClickListener listener){
             super(itemVew);
             this.listener = listener;
             songName = itemVew.findViewById(R.id.songName);
+            txtPrediction = itemVew.findViewById(R.id.txtPrediction);
             itemVew.setOnClickListener(this);
         }
 
@@ -35,10 +37,11 @@ public class SongRecyclerAdapter extends RecyclerView.Adapter<SongRecyclerAdapte
         }
     }
 
-    public SongRecyclerAdapter(Context ct, List<String> songs, SongClickListener listener){
+    public SongRecyclerAdapter(Context ct, List<String> songs, List<String> predictions, SongClickListener listener){
         mContext = ct;
         mSongs = songs;
         this.listener = listener;
+        this.predictions = predictions;
     }
     @NonNull
     @Override
@@ -51,6 +54,12 @@ public class SongRecyclerAdapter extends RecyclerView.Adapter<SongRecyclerAdapte
     @Override
     public void onBindViewHolder(@NonNull SongViewHolder holder, int position) {
         holder.songName.setText(mSongs.get(position));
+        if(predictions.size() != 0){
+            holder.txtPrediction.setText(predictions.get(position));
+        }
+        else{
+            holder.txtPrediction.setText("Genre?");
+        }
     }
 
     @Override
