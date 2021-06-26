@@ -44,7 +44,7 @@
             android:id="@+id/modelProgress"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:layout_marginTop="40dp"
+            android:layout_marginTop="38dp"
             android:layout_marginStart="250dp"
             android:indeterminate="true">
 
@@ -57,6 +57,41 @@
             android:layout_marginTop="105dp"
             android:layout_marginStart="250dp"
             android:indeterminate="true">
+
+        </ProgressBar>
+
+        <TextView
+            android:id="@+id/txtReady"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="150dp"
+            android:layout_marginTop="10dp"
+            android:text="Model is not ready!"
+            android:textColor="@color/red">
+
+        </TextView>
+
+        <ImageView
+            android:id="@+id/ivReady"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginStart="240dp"
+            android:background="@drawable/ic_check"
+            android:contentDescription="Ready">
+
+        </ImageView>
+
+        <ProgressBar
+            android:id="@+id/predictProgressHorizontal"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="125dp"
+            android:layout_marginTop="150dp"
+            style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+            android:indeterminate="false"
+            android:max="100"
+            android:progress="0">
 
         </ProgressBar>
     </FrameLayout>

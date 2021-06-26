@@ -1,9 +1,12 @@
 package com.example.mlmusicplayer;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -22,12 +25,14 @@ public class SongRecyclerAdapter extends RecyclerView.Adapter<SongRecyclerAdapte
         private final TextView songName;
         private TextView txtPrediction;
         private SongClickListener listener;
+        private RelativeLayout itemLayout;
 
         public SongViewHolder(@NonNull View itemVew, SongClickListener listener){
             super(itemVew);
             this.listener = listener;
             songName = itemVew.findViewById(R.id.songName);
             txtPrediction = itemVew.findViewById(R.id.txtPrediction);
+            itemLayout = itemVew.findViewById(R.id.itemLayout);
             itemVew.setOnClickListener(this);
         }
 
@@ -56,6 +61,8 @@ public class SongRecyclerAdapter extends RecyclerView.Adapter<SongRecyclerAdapte
         holder.songName.setText(mSongs.get(position));
         if(predictions.size() != 0){
             holder.txtPrediction.setText(predictions.get(position));
+            holder.txtPrediction.setTextColor(Color.parseColor("#1D6C00"));
+
         }
         else{
             holder.txtPrediction.setText("Genre?");

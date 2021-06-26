@@ -2,6 +2,7 @@ package com.example.mlmusicplayer;
 
 import android.Manifest;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -24,6 +25,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -57,6 +59,8 @@ import java.util.List;
 public class SongsFragment extends Fragment implements SongClickListener{
 
     private RecyclerView songRecycler;
+    private TextView txtReady;
+    private ImageView ivReady;
     private Button btnPredict, btnModel;
     private SongRecyclerAdapter songAdapter;
     private List<String> songs = new ArrayList<>();
@@ -65,7 +69,8 @@ public class SongsFragment extends Fragment implements SongClickListener{
     private static final String TAG = "Predictor";
     private PyObject modelObject;
     private boolean isModelSetup = false;
-    private ProgressBar progressModel, progressPrediction;
+    private ProgressBar progressModel, progressPrediction, progressPredictionHorizontal;
+    private int progress;
     private Handler handler = new Handler(){
 
         @Override
@@ -78,12 +83,16 @@ public class SongsFragment extends Fragment implements SongClickListener{
                 btnModel.setEnabled(true);
                 btnPredict.setEnabled(true);
                 progressModel.setVisibility(View.INVISIBLE);
+                txtReady.setTextColor(Color.parseColor("#1D6C00"));
+                txtReady.setVisibility(View.VISIBLE);
+                txtReady.setText("Model is ready!");
+                ivReady.setVisibility(View.VISIBLE);
             }
             if(objBundle.containsKey("PREDICT")){
                 btnModel.setEnabled(true);
                 btnPredict.setEnabled(true);
                 progressPrediction.setVisibility(View.INVISIBLE);
-
+                progressPredictionHorizontal.setVisibility(View.INVISIBLE);
             }
 
         }
@@ -110,6 +119,9 @@ public class SongsFragment extends Fragment implements SongClickListener{
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        txtReady = view.findViewById(R.id.txtReady);
+        ivReady = view.findViewById(R.id.ivReady);
+        ivReady.setVisibility(View.INVISIBLE);
         btnPredict = view.findViewById(R.id.btnPredict);
         btnPredict.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -125,9 +137,14 @@ public class SongsFragment extends Fragment implements SongClickListener{
             }
         });
         progressModel = view.findViewById(R.id.modelProgress);
+        progressModel.getIndeterminateDrawable().setColorFilter(Color.parseColor("#d16c00"), android.graphics.PorterDuff.Mode.SRC_IN);
         progressModel.setVisibility(View.INVISIBLE);
         progressPrediction = view.findViewById(R.id.predictProgress);
+        progressPrediction.getIndeterminateDrawable().setColorFilter(Color.parseColor("#d16c00"), android.graphics.PorterDuff.Mode.SRC_IN);
         progressPrediction.setVisibility(View.INVISIBLE);
+        progressPredictionHorizontal = view.findViewById(R.id.predictProgressHorizontal);
+        progressPredictionHorizontal.getProgressDrawable().setColorFilter(Color.parseColor("#d16c00"), android.graphics.PorterDuff.Mode.SRC_IN);
+        progressPredictionHorizontal.setVisibility(View.INVISIBLE);
         songRecycler = view.findViewById(R.id.songs_recycler);
         songRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         runtimePermission();
@@ -176,7 +193,7 @@ public class SongsFragment extends Fragment implements SongClickListener{
         Log.i(TAG, "SONGS: " + mySongs);
 
         for (int i = 0; i < mySongs.size(); i++) {
-            songs.add(mySongs.get(i).getName().replace(".mp3", "").replace(".wav", ""));
+            songs.add(mySongs.get(i).getName().replace(".mp3", "").replace(".wav", "").replace(".WAV", ""));
             Log.v("SONGS", songs.get(i));
         }
 
@@ -250,6 +267,9 @@ public class SongsFragment extends Fragment implements SongClickListener{
             btnModel.setEnabled(false);
             btnPredict.setEnabled(false);
             progressPrediction.setVisibility(View.VISIBLE);
+            progressPredictionHorizontal.setVisibility(View.VISIBLE);
+            progressPredictionHorizontal.setProgress(0);
+            progress = progressPredictionHorizontal.getProgress();
             Runnable objRunnable = new Runnable() {
 
                 Message message = handler.obtainMessage();
@@ -270,16 +290,17 @@ public class SongsFragment extends Fragment implements SongClickListener{
                             Log.i(TAG, "PREDICTION: " + pyobj);
                             predictions.add(formatPrediction(pyobj.toString()));
                             // Get a handler that can be used to post to the main thread
-                            Handler mainHandler = new Handler(Looper.getMainLooper());
-
+                            progress += (100 + mySongs.size() -1)/mySongs.size();
                             int finalIndex = index;
-                            Runnable myRunnable = new Runnable() {
+                            Handler mainHandler = new Handler(Looper.getMainLooper());
+                            Runnable myRunnableGenre = new Runnable() {
                                 @Override
                                 public void run() {
                                     songAdapter.notifyItemChanged(finalIndex);
+                                    progressPredictionHorizontal.setProgress(progress);
                                 } // This is your code
                             };
-                            mainHandler.post(myRunnable);
+                            mainHandler.post(myRunnableGenre);
                             index++;
                         }
                     }
