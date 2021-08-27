@@ -1,6 +1,8 @@
 from typing import List
 import librosa
 import numpy as np
+import ffmpeg
+from pydub import AudioSegment
 
 def generate_features(song):
     y, sr = librosa.load(song, mono=True, duration=30)
@@ -24,3 +26,9 @@ def generate_features(song):
 
     print(features)
     return features
+
+def convert_audio(recording):
+    path = "/storage/emulated/0/Music/recording.wav"
+    sound = AudioSegment.from_mp3(recording)
+    sound.export(path, format="wav")
+

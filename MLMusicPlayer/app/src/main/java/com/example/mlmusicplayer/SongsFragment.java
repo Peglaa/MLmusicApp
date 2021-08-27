@@ -3,7 +3,6 @@ package com.example.mlmusicplayer;
 import android.Manifest;
 import android.content.Intent;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -17,13 +16,10 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.provider.MediaStore;
-import android.util.AtomicFile;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -33,7 +29,6 @@ import android.widget.Toast;
 import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
 import com.chaquo.python.android.AndroidPlatform;
-import com.example.mlmusicplayer.ml.TfLiteModel;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionDeniedResponse;
@@ -41,19 +36,8 @@ import com.karumi.dexter.listener.PermissionGrantedResponse;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.single.PermissionListener;
 
-import org.tensorflow.lite.DataType;
-import org.tensorflow.lite.Tensor;
-import org.tensorflow.lite.schema.TensorType;
-import org.tensorflow.lite.support.image.TensorImage;
-import org.tensorflow.lite.support.metadata.schema.TensorMetadata;
-import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
-import org.tensorflow.lite.support.tensorbuffer.TensorBufferFloat;
-
 import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class SongsFragment extends Fragment implements SongClickListener{
@@ -68,7 +52,7 @@ public class SongsFragment extends Fragment implements SongClickListener{
     private ArrayList<String> predictions = new ArrayList<>();
     private static final String TAG = "Predictor";
     private PyObject modelObject;
-    private boolean isModelSetup = false;
+    private boolean isModelSetup =  false;
     private ProgressBar progressModel, progressPrediction, progressPredictionHorizontal;
     private int progress;
     private Handler handler = new Handler(){
@@ -286,6 +270,7 @@ public class SongsFragment extends Fragment implements SongClickListener{
                         Log.i(TAG, "Extracting features... ");
                         int index = 0;
                         for (File song : mySongs) {
+                            Log.d(TAG, "SONG_PATH: " + song);
                             PyObject pyobj = pyObject.callAttr("full_prediction", song.toString(), modelObject);
                             Log.i(TAG, "PREDICTION: " + pyobj);
                             predictions.add(formatPrediction(pyobj.toString()));

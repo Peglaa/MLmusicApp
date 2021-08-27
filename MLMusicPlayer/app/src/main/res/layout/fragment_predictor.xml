@@ -1,15 +1,98 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".PredictorFragment">
 
-    <TextView
-        android:id="@+id/txtTest"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment"
-        android:gravity="center"/>
+    <Button
+        android:id="@+id/btnStop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Stop"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        />
 
-</FrameLayout>
+    <Button
+        android:id="@+id/btnRecord"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Record"
+        android:layout_toStartOf="@id/btnStop"
+        android:layout_centerVertical="true"
+        android:layout_marginEnd="40dp"
+        />
+
+    <Button
+        android:id="@+id/btnPlay"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Play"
+        android:layout_toEndOf="@id/btnStop"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="40dp"
+        />
+
+    <Button
+        android:id="@+id/btnModel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="SETUP MODEL"
+        android:layout_marginTop="40dp"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/btnStop"
+        />
+
+    <Button
+        android:id="@+id/btnPredict"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Predict"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/btnModel"
+        />
+
+    <ProgressBar
+        android:id="@+id/pbModel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/btnStop"
+        android:layout_marginTop="40dp"
+        android:layout_toEndOf="@id/btnModel"/>
+
+    <ProgressBar
+        android:id="@+id/pbPredict"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/btnModel"
+        android:layout_toEndOf="@id/btnPredict"/>
+
+    <TextView
+        android:id="@+id/txtReady"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="150dp"
+        android:layout_marginTop="10dp"
+        android:text="Model is not ready!"
+        android:textColor="@color/red"
+        android:layout_below="@id/btnStop"
+        >
+
+    </TextView>
+
+    <ImageView
+        android:id="@+id/ivReady"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/ic_check"
+        android:contentDescription="Ready"
+        android:layout_toEndOf="@id/txtReady"
+        android:layout_below="@id/btnStop">
+
+    </ImageView>
+
+</RelativeLayout>
