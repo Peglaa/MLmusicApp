@@ -4,7 +4,6 @@ import android.Manifest;
 import android.content.ContextWrapper;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Bundle;
@@ -35,6 +34,10 @@ import com.chaquo.python.Python;
 import com.chaquo.python.android.AndroidPlatform;
 
 import java.io.File;
+
+import cafe.adriel.androidaudioconverter.AndroidAudioConverter;
+import cafe.adriel.androidaudioconverter.callback.IConvertCallback;
+import cafe.adriel.androidaudioconverter.model.AudioFormat;
 
 public class PredictorFragment extends Fragment {
 
@@ -196,37 +199,66 @@ public class PredictorFragment extends Fragment {
             btnModel.setEnabled(false);
             btnPredict.setEnabled(false);
             progressPrediction.setVisibility(View.VISIBLE);
-            Runnable objRunnable = new Runnable() {
 
-                Message message = handler.obtainMessage();
-                Bundle objBundle = new Bundle();
-
+            File flacFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), "/recording.mp3");
+            IConvertCallback callback = new IConvertCallback() {
                 @Override
-                public void run() {
-                    try {
-                        if (! Python.isStarted()) {
-                            Python.start(new AndroidPlatform(requireContext()));
-                        }
-                        Python py = Python.getInstance();
-                        //PyObject pyObjectConvert = py.getModule("extractor");
-                        //PyObject pyobjConvert = pyObjectConvert.callAttr("convert_audio", mFilePath);
-                        PyObject pyObjectPredict = py.getModule("classifier");
-                        pyobj = pyObjectPredict.callAttr("full_prediction", mFilePathWAV, modelObject);
-
-                    }
-                    catch (Exception e){
-                        e.printStackTrace();
-                    }
-
-                    objBundle.putString("PREDICT", "predict");
-                    objBundle.putString("PREDICTED_VALUE", formatPrediction(pyobj.toString()));
-                    message.setData(objBundle);
-                    handler.sendMessage(message);
+                public void onSuccess(File convertedFile) {
+                    Log.d("TAG", "onSuccessConvert: " + convertedFile.getAbsolutePath());
+                    Log.d("TAG", "onSuccessConvertWav: " + mFilePathWAV);
+                    predictInBackground(convertedFile.getAbsolutePath());
+                }
+                @Override
+                public void onFailure(Exception error) {
+                    // Oops! Something went wrong
                 }
             };
-            Thread objBackgroundThread = new Thread(objRunnable);
-            objBackgroundThread.start();
+            AndroidAudioConverter.with(requireContext())
+                    // Your current audio file
+                    .setFile(flacFile)
+
+                    // Your desired audio format
+                    .setFormat(AudioFormat.WAV)
+
+                    // An callback to know when conversion is finished
+                    .setCallback(callback)
+
+                    // Start conversion
+                    .convert();
         }
+    }
+
+    private void predictInBackground(String convertedFile){
+        Runnable objRunnable = new Runnable() {
+
+            Message message = handler.obtainMessage();
+            Bundle objBundle = new Bundle();
+
+            @Override
+            public void run() {
+                try {
+                    if (! Python.isStarted()) {
+                        Python.start(new AndroidPlatform(requireContext()));
+                    }
+                    Python py = Python.getInstance();
+                    //PyObject pyObjectConvert = py.getModule("extractor");
+                    //PyObject pyobjConvert = pyObjectConvert.callAttr("convert_audio", mFilePath);
+                    PyObject pyObjectPredict = py.getModule("classifier");
+                    pyobj = pyObjectPredict.callAttr("full_prediction", convertedFile, modelObject);
+
+                }
+                catch (Exception e){
+                    e.printStackTrace();
+                }
+
+                objBundle.putString("PREDICT", "predict");
+                objBundle.putString("PREDICTED_VALUE", formatPrediction(pyobj.toString()));
+                message.setData(objBundle);
+                handler.sendMessage(message);
+            }
+        };
+        Thread objBackgroundThread = new Thread(objRunnable);
+        objBackgroundThread.start();
     }
 
     private boolean isMicrophonePresent(){
