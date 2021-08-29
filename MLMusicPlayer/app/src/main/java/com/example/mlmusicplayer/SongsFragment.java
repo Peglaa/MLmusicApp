@@ -309,6 +309,11 @@ public class SongsFragment extends Fragment implements SongClickListener{
         String pred1 = prediction.replace("[", "");
         String pred2 = pred1.replace("]", "");
         int num = Integer.parseInt(pred2);
+        /*String[] genres = pred2.split("\\.");
+        for(int i = 0; i<genres.length; i++){
+            if(genres[i].equals("1"))
+                num = i;
+        }*/
         switch(num){
             default:
                 return "Genre";

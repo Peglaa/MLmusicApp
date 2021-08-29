@@ -313,14 +313,9 @@ public class PredictorFragment extends Fragment {
         }
     }
     private String formatPrediction(String prediction){
-        int num = 0;
         String pred1 = prediction.replace("[", "");
         String pred2 = pred1.replace("]", "");
-        String[] genres = pred2.split("\\.");
-        for(int i = 0; i<genres.length; i++){
-            if(genres[i].equals("1"))
-                num = i;
-        }
+        int num = Integer.parseInt(pred2);
         switch(num){
             default:
                 return "Genre";

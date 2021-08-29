@@ -77,8 +77,8 @@ def generate_features():
 def get_feature_data(datacsv):
     data = pd.read_csv(datacsv)
     shuffled_data = data.sample(frac=1)
-    y = shuffled_data.label
-    x = shuffled_data.drop(["label", "filename"], axis=1)
+    y = data.label
+    x = data.drop(["label", "filename"], axis=1)
 
     le = LabelEncoder()
     target = le.fit_transform(y)
@@ -98,7 +98,7 @@ def split_data(x, y):
     X_train = scaler.transform(x_train)
     X_test = scaler.transform(x_test)
 
-    return X_train, X_test, y_train, y_test
+    return x_train, x_test, y_train, y_test
 
 #kernel_regularizer=keras.regularizers.l2(0.001) - keras.layers.Dropout(0.4)
 
@@ -178,16 +178,16 @@ def setupModel(data):
     X_train, X_test, Y_train, Y_test = split_data(X,Y)
     
     
-    '''classifier = KNeighborsClassifier(n_neighbors=5)
+    classifier = KNeighborsClassifier(n_neighbors=9)
     classifier.fit(X_train, Y_train)
 
     y_pred = classifier.predict(X_test)
 
     print(confusion_matrix(Y_test, y_pred))
-    print(classification_report(Y_test, y_pred))'''
+    print(classification_report(Y_test, y_pred))
 
     
-    model = create_model(X_train)
+    '''model = create_model(X_train)
 
     optimizer = keras.optimizers.Adam(learning_rate = 0.001)
     model.compile(  optimizer=optimizer,
@@ -196,9 +196,9 @@ def setupModel(data):
 
     model.summary()
 
-    history = model.fit(X_train, Y_train, validation_data=(X_test, Y_test), epochs=50, batch_size=32)
+    history = model.fit(X_train, Y_train, validation_data=(X_test, Y_test), epochs=50, batch_size=32)'''
 
-    return model
+    return classifier
 
 def full_prediction(song, model):
     '''
