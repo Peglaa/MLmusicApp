@@ -16,6 +16,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, confusion_matrix
 from tensorflow.python.keras.backend import sparse_categorical_crossentropy
 from tensorflow.python.keras.layers.core import Dropout
@@ -177,16 +178,24 @@ def setupModel(data):
     X, Y = get_feature_data(data)
     X_train, X_test, Y_train, Y_test = split_data(X,Y)
     
-    
-    classifier = KNeighborsClassifier(n_neighbors=9)
+    #K NEAREST
+    '''classifier = KNeighborsClassifier(n_neighbors=9)
     classifier.fit(X_train, Y_train)
 
     y_pred = classifier.predict(X_test)
 
     print(confusion_matrix(Y_test, y_pred))
+    print(classification_report(Y_test, y_pred))'''
+
+    #RANDOM FOREST
+    random_forest = RandomForestClassifier(n_estimators=300, max_depth= 50)
+    random_forest.fit(X_train, Y_train)
+    y_pred = random_forest.predict(X_test)
+
+    print(confusion_matrix(Y_test, y_pred))
     print(classification_report(Y_test, y_pred))
 
-    
+    #NEURAL NETWORK
     '''model = create_model(X_train)
 
     optimizer = keras.optimizers.Adam(learning_rate = 0.001)
@@ -198,7 +207,7 @@ def setupModel(data):
 
     history = model.fit(X_train, Y_train, validation_data=(X_test, Y_test), epochs=50, batch_size=32)'''
 
-    return classifier
+    return random_forest
 
 def full_prediction(song, model):
     '''
