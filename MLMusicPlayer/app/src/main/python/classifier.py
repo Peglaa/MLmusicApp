@@ -40,7 +40,7 @@ def create_spectograms():
 '''
 
 #Writing to csv file
-'''
+
 def generate_features():
     header = 'filename chroma_stft rmse spectral_centroid spectral_bandwidth rolloff zero_crossing_rate'
     for i in range(1, 21):
@@ -72,7 +72,7 @@ def generate_features():
             with file:
                 writer = csv.writer(file)
                 writer.writerow(to_append.split())
-'''
+
 
 def get_feature_data(datacsv):
     data = pd.read_csv(datacsv)
@@ -98,7 +98,9 @@ def split_data(x, y):
     X_train = scaler.transform(x_train)
     X_test = scaler.transform(x_test)
 
-    return x_train, x_test, y_train, y_test
+    return X_train, X_test, y_train, y_test
+
+#kernel_regularizer=keras.regularizers.l2(0.001) - keras.layers.Dropout(0.4)
 
 def create_model(X_train):
     model = keras.Sequential([
@@ -176,15 +178,15 @@ def setupModel(data):
     X_train, X_test, Y_train, Y_test = split_data(X,Y)
     
     
-    classifier = KNeighborsClassifier(n_neighbors=5)
+    '''classifier = KNeighborsClassifier(n_neighbors=5)
     classifier.fit(X_train, Y_train)
 
     y_pred = classifier.predict(X_test)
 
     print(confusion_matrix(Y_test, y_pred))
-    print(classification_report(Y_test, y_pred))
+    print(classification_report(Y_test, y_pred))'''
 
-    '''
+    
     model = create_model(X_train)
 
     optimizer = keras.optimizers.Adam(learning_rate = 0.001)
@@ -192,11 +194,11 @@ def setupModel(data):
                     loss="sparse_categorical_crossentropy",
                     metrics=["sparse_categorical_accuracy"])
 
-    #model.summary()
+    model.summary()
 
-    history = model.fit(X_train, Y_train, validation_data=(X_test, Y_test), epochs=50, batch_size=32)'''
+    history = model.fit(X_train, Y_train, validation_data=(X_test, Y_test), epochs=50, batch_size=32)
 
-    return classifier
+    return model
 
 def full_prediction(song, model):
     '''
@@ -221,4 +223,4 @@ def full_prediction(song, model):
     return prediction
 
 if __name__ == "__main__":
-    full_prediction("C:\\Users\\stipa\\Desktop\\CLAUDE DEBUSSY CLAIR DE LUNE(classical).WAV", setupModel("data.csv"))
+    full_prediction("C:\\Users\\stipa\\Desktop\\CLAUDE DEBUSSY -  CLAIR DE LUNE.wav", setupModel("data.csv"))

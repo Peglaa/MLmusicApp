@@ -43,8 +43,10 @@ public class PredictorFragment extends Fragment {
     private Button btnRecord, btnStop, btnPlay, btnModel, btnPredict;
     private MediaRecorder recorder = new MediaRecorder();
     private PyObject modelObject;
+    private PyObject pyobj;
     private boolean isModelSetup = false;
-    private String mFilePath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/recording.mp3";
+    private String mFilePathMP3 = Environment.getExternalStorageDirectory().getAbsolutePath() + "/recording.mp3";
+    private String mFilePathWAV = Environment.getExternalStorageDirectory().getAbsolutePath() + "/recording.wav";
     private ProgressBar progressModel, progressPrediction;
     private Handler handler = new Handler(){
 
@@ -67,6 +69,8 @@ public class PredictorFragment extends Fragment {
                 btnModel.setEnabled(true);
                 btnPredict.setEnabled(true);
                 progressPrediction.setVisibility(View.INVISIBLE);
+                String predicted_value = objBundle.getString("PREDICTED_VALUE");
+                Toast.makeText(getContext(), predicted_value,Toast.LENGTH_SHORT).show();
             }
 
         }
@@ -153,7 +157,7 @@ public class PredictorFragment extends Fragment {
         try{
             recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
             recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-            recorder.setOutputFile(mFilePath);
+            recorder.setOutputFile(mFilePathMP3);
             recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
             recorder.prepare();
             recorder.start();
@@ -204,12 +208,10 @@ public class PredictorFragment extends Fragment {
                             Python.start(new AndroidPlatform(requireContext()));
                         }
                         Python py = Python.getInstance();
-                        PyObject pyObjectConvert = py.getModule("extractor");
-                        PyObject pyobjConvert = pyObjectConvert.callAttr("convert_audio", mFilePath);
+                        //PyObject pyObjectConvert = py.getModule("extractor");
+                        //PyObject pyobjConvert = pyObjectConvert.callAttr("convert_audio", mFilePath);
                         PyObject pyObjectPredict = py.getModule("classifier");
-                        PyObject pyobj = pyObjectPredict.callAttr("full_prediction", "/storage/emulated/0/Music/recording.wav", modelObject);
-
-                        Toast.makeText(getContext(), formatPrediction(pyobj.toString()),Toast.LENGTH_SHORT).show();
+                        pyobj = pyObjectPredict.callAttr("full_prediction", mFilePathWAV, modelObject);
 
                     }
                     catch (Exception e){
@@ -217,6 +219,7 @@ public class PredictorFragment extends Fragment {
                     }
 
                     objBundle.putString("PREDICT", "predict");
+                    objBundle.putString("PREDICTED_VALUE", formatPrediction(pyobj.toString()));
                     message.setData(objBundle);
                     handler.sendMessage(message);
                 }
@@ -278,9 +281,14 @@ public class PredictorFragment extends Fragment {
         }
     }
     private String formatPrediction(String prediction){
+        int num = 0;
         String pred1 = prediction.replace("[", "");
         String pred2 = pred1.replace("]", "");
-        int num = Integer.parseInt(pred2);
+        String[] genres = pred2.split("\\.");
+        for(int i = 0; i<genres.length; i++){
+            if(genres[i].equals("1"))
+                num = i;
+        }
         switch(num){
             default:
                 return "Genre";
